@@ -1,0 +1,13 @@
+# /etc/systemd/system/c64socat.service
+[Unit]
+Description=C64 socat shell listener
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+ExecStart=/usr/bin/socat TCP-LISTEN:2323,reuseaddr,fork \
+  EXEC:'/usr/local/bin/c64_shell.sh',pty,setsid,ctty,icanon=1,echo=1,echoctl=0,isig=1,iexten=1,opost=1,onlcr=1,icrnl=1
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
