@@ -3,7 +3,9 @@ Description=C64 socat shell listener
 After=network.target
 
 [Service]
-ExecStart=/usr/bin/socat TCP-LISTEN:2323,reuseaddr,fork EXEC:'/usr/bin/env -i TERM=vt100 PS1=$  /bin/sh -i',pty,setsid,ctty,icanon=1,echo=1,echoctl=0,isig=1,iexten=1,opost=1,onlcr=1,icrnl=1
+ExecStart=/usr/bin/socat TCP-LISTEN:2323,reuseaddr,fork,keepalive,keepidle=30,keepintvl=10,keepcnt=3 EXEC:"/sbin/agetty -8 -L 38400 tty",pty,setsid,ctty
+
+# ExecStart=/usr/bin/socat TCP-LISTEN:2323,reuseaddr,fork EXEC:'/usr/bin/env -i TERM=vt100 PS1=$  /bin/sh -i',pty,setsid,ctty,icanon=1,echo=1,echoctl=0,isig=1,iexten=1,opost=1,onlcr=1,icrnl=1
 Restart=always
 
 [Install]
