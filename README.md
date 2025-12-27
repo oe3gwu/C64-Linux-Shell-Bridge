@@ -38,48 +38,8 @@ These are client-side settings you will configure in StrikeTerm (or equivalent) 
 - **Terminal type / TERM:** `vt100` (or `vt102`)  
 - **Local echo:** **Off** (the remote shell will echo)  
 - **Line ending / Newline:** `CR` for outgoing newlines is commonly expected by many C64 programs — adjust if needed.  
-- **Serial params (C64 ↔ modem):** set to match your modem (typical: `2400`/`4800`/`9600` baud, `8N1`, no flow control).
+- **Serial params (C64 ↔ modem):** set to match your modem (typical: `2400`/`4800` baud, `8N1`, no flow control). Everything above can break the session output.
 
 **Why raw TCP?** Vintage C64 terminal programs frequently cannot interpret Telnet option negotiation bytes (IAC 0xFF sequences). A raw TCP bridge forwards only the user data bytes and avoids inserting telnet negotiation sequences that would appear as garbage on the C64.
 
 ---
-
-## 4 — Hardened example service (safe pattern)
-
-Below is a **safer** example of a systemd service unit that runs a socat-based relay but **binds to loopback only** and includes some systemd hardening directives. This example is intended as a local-only, lab-safe pattern — use it only on trusted hosts and networks or with additional wrapping (SSH tunnels, TLS) for remote access.
-
-> This is an example for *local testing* and audit purposes. Do **not** copy a service that listens on `0.0.0.0` on an Internet-facing host.
-
-```ini
-# /etc/systemd/system/c64-socat-listener-local.service
-[Unit]
-Description=C64 socat shell listener (local-only, lab/demo)
-After=network.target
-
-[Service]
-# Run under a dedicated unprivileged user (create user 'c64shell' separately)
-User=c64shell
-Group=c64shell
-
-# Bind to loopback only to require an SSH tunnel or local access
-ExecStart=/usr/bin/socat \
-  TCP-LISTEN:2323,bind=127.0.0.1,reuseaddr,fork \
-  EXEC:'/usr/bin/env -i TERM=vt100 PS1="$ " /bin/sh -i',pty,setsid,ctty,icanon=1,echo=1,echoctl=0,isig=1,iexten=1,opost=1,onlcr=1,icrnl=1
-
-Restart=on-failure
-RestartSec=5
-
-# Hardening recommendations
-ProtectSystem=full
-ProtectHome=yes
-NoNewPrivileges=yes
-PrivateTmp=yes
-ProtectKernelTunables=yes
-ProtectKernelModules=yes
-ProtectControlGroups=yes
-RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
-CapabilityBoundingSet=CAP_CHOWN CAP_SETGID CAP_SETUID
-StateDirectory=c64-socat-listener
-
-[Install]
-WantedBy=multi-user.target
